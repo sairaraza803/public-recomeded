@@ -26,6 +26,7 @@
     .small-btn:hover{background:#f3f6fb}
     .meta{font-size:13px;color:#666;margin-top:10px;display:flex;justify-content:space-between;align-items:center}
     .empty{padding:18px;text-align:center;color:#666}
+    .undo{background:#fff3cd;color:#856404;border:1px solid #ffeeba;padding:8px 10px;border-radius:8px}
     @media (max-width:520px){form{flex-direction:column} .controls{flex-direction:column;align-items:stretch}}
   </style>
 </head>
@@ -45,8 +46,10 @@
           <button class="filter" data-filter="active">Active</button>
           <button class="filter" data-filter="completed">Completed</button>
         </div>
-        <div style="margin-left:auto;display:flex;gap:8px">
+        <div style="margin-left:auto;display:flex;gap:8px;align-items:center">
           <button id="clear-completed" class="ghost">Clear completed</button>
+          <button id="clear-all" class="ghost" title="Remove all tasks">Clear all</button>
+          <button id="undo-btn" class="undo" title="Undo last delete" style="display:none">Undo</button>
           <button id="export" class="ghost" title="Download JSON">Export</button>
           <button id="import" class="ghost" title="Load JSON">Import</button>
         </div>
@@ -72,6 +75,10 @@
     let todos = []; // {id, text, done, createdAt}
     let filter = 'all'; // all | active | completed
 
+    // Undo support
+    let lastDeleted = null; // {type: 'single'|'all', items: [...], index: number}
+    let undoTimer = null;
+
     // Elements
     const listEl = document.getElementById('todo-list');
     const newTaskInput = document.getElementById('new-task');
@@ -80,6 +87,8 @@
     const emptyMsg = document.getElementById('empty-msg');
     const filterButtons = document.querySelectorAll('.filter');
     const clearCompletedBtn = document.getElementById('clear-completed');
+    const clearAllBtn = document.getElementById('clear-all');
+    const undoBtn = document.getElementById('undo-btn');
     const exportBtn = document.getElementById('export');
     const importBtn = document.getElementById('import');
     const importFileInput = document.getElementById('import-file');
@@ -108,6 +117,8 @@
       if (!t) return;
       todos.unshift({ id: uid(), text: t, done: false, createdAt: new Date().toISOString() });
       save();
+      // adding resets undo
+      clearUndo();
     }
 
     function toggleDone(id) {
@@ -116,8 +127,13 @@
     }
 
     function removeFromList(id) {
-      todos = todos.filter(x => x.id !== id);
+      const idx = todos.findIndex(x => x.id === id);
+      if (idx === -1) return;
+      const [removed] = todos.splice(idx, 1);
+      // store lastDeleted with index to restore original order
+      lastDeleted = { type: 'single', items: [removed], index: idx };
       save();
+      showUndo();
     }
 
     function editTodo(id) {
@@ -134,13 +150,61 @@
       }
       it.text = newText.trim();
       save();
+      clearUndo();
     }
 
     function clearCompleted() {
       if (!todos.some(t => t.done)) return alert('No completed tasks.');
       if (!confirm('Remove all completed tasks?')) return;
+      // store removed items for undo
+      const removed = todos.filter(t => t.done);
+      if (removed.length > 0) {
+        lastDeleted = { type: 'many', items: removed.map(x => ({...x})), index: null };
+      }
       todos = todos.filter(t => !t.done);
       save();
+      if (lastDeleted) showUndo();
+    }
+
+    function clearAll() {
+      if (todos.length === 0) return alert('No tasks to clear.');
+      if (!confirm('Remove ALL tasks? This can be undone with Undo for a short time.')) return;
+      lastDeleted = { type: 'all', items: todos.map(x => ({...x})), index: null };
+      todos = [];
+      save();
+      showUndo();
+    }
+
+    function undoLast() {
+      if (!lastDeleted) return alert('Nothing to undo.');
+      if (lastDeleted.type === 'single') {
+        const item = lastDeleted.items[0];
+        const idx = Math.min(lastDeleted.index, todos.length);
+        todos.splice(idx, 0, item);
+      } else if (lastDeleted.type === 'many' || lastDeleted.type === 'all') {
+        // restore by prepending old items while preserving order
+        todos = lastDeleted.items.concat(todos);
+      }
+      lastDeleted = null;
+      save();
+      hideUndo();
+    }
+
+    function clearUndo() {
+      lastDeleted = null;
+      hideUndo();
+    }
+
+    function showUndo() {
+      undoBtn.style.display = 'inline-block';
+      if (undoTimer) clearTimeout(undoTimer);
+      // auto-hide undo after 10 seconds to keep UI simple
+      undoTimer = setTimeout(() => { hideUndo(); lastDeleted = null; }, 10000);
+    }
+
+    function hideUndo() {
+      undoBtn.style.display = 'none';
+      if (undoTimer) { clearTimeout(undoTimer); undoTimer = null; }
     }
 
     function filteredTodos() {
@@ -172,7 +236,6 @@
         span.className = 'todo-text' + (t.done ? ' done' : '');
         span.textContent = t.text;
         span.title = 'Double-click to edit';
-        // optional: double-click to edit
         span.addEventListener('dblclick', () => editTodo(t.id));
         li.appendChild(span);
 
@@ -223,6 +286,8 @@
     });
 
     clearCompletedBtn.addEventListener('click', clearCompleted);
+    clearAllBtn.addEventListener('click', clearAll);
+    undoBtn.addEventListener('click', undoLast);
 
     // Export as JSON
     exportBtn.addEventListener('click', () => {
@@ -255,6 +320,7 @@
           }));
           save();
           alert('Imported ' + todos.length + ' tasks.');
+          clearUndo();
         } catch (err) {
           alert('Failed to import: ' + err.message);
         }
