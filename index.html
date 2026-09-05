@@ -1,420 +1,271 @@
-<!DOCTYPE html>
+<!doctype html>
 <html lang="en">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Pick and Go - POS System</title>
-    <style>
-        body {
-            font-family: Arial, sans-serif;
-            background-color: #f4f6f9;
-            margin: 0;
-            padding: 20px;
-        }
-        .container {
-            max-width: 1100px;
-            margin: 0 auto;
-            background: white;
-            padding: 20px;
-            border-radius: 8px;
-            box-shadow: 0 4px 10px rgba(0,0,0,0.1);
-        }
-        h2 {
-            text-align: center;
-            color: #333;
-        }
-        .search-box {
-            margin-bottom: 15px;
-        }
-        .search-box input {
-            width: 100%;
-            padding: 10px;
-            font-size: 16px;
-            border: 1px solid #ccc;
-            border-radius: 4px;
-            box-sizing: border-box;
-        }
-        .grid {
-            display: flex;
-            gap: 20px;
-            flex-wrap: wrap;
-        }
-        .panel {
-            flex: 1;
-            min-width: 320px;
-            padding: 15px;
-            border: 1px solid #ddd;
-            border-radius: 6px;
-            background: #fafafa;
-        }
-        .product-scroll {
-            max-height: 440px;
-            overflow-y: auto;
-            padding-right: 5px;
-        }
-        .item-card {
-            background: white;
-            padding: 10px;
-            margin-bottom: 10px;
-            border: 1px solid #ccc;
-            border-radius: 4px;
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-        }
-        button {
-            background-color: #28a745;
-            color: white;
-            border: none;
-            padding: 6px 12px;
-            border-radius: 4px;
-            cursor: pointer;
-        }
-        button:hover {
-            background-color: #218838;
-        }
-        .danger-btn {
-            background-color: #dc3545;
-        }
-        .danger-btn:hover {
-            background-color: #c82333;
-        }
-        table {
-            width: 100%;
-            border-collapse: collapse;
-            margin-top: 10px;
-        }
-        th, td {
-            border: 1px solid #ddd;
-            padding: 8px;
-            text-align: left;
-            font-size: 14px;
-        }
-        th {
-            background-color: #f2f2f2;
-        }
-        .total-section {
-            margin-top: 15px;
-            font-size: 18px;
-            font-weight: bold;
-            text-align: right;
-        }
-        .checkout-btn {
-            width: 100%;
-            margin-top: 15px;
-            padding: 10px;
-            font-size: 16px;
-        }
-        input[type="number"] {
-            width: 45px;
-            padding: 4px;
-            text-align: center;
-            margin-right: 5px;
-        }
-
-        /* Fixed Print Media Styling */
-        @media print {
-            body * {
-                visibility: hidden;
-            }
-            #receipt, #receipt * {
-                visibility: visible;
-            }
-            #receipt {
-                display: block !important;
-                position: absolute;
-                left: 0;
-                top: 0;
-                width: 100%;
-                background: white;
-                padding: 10px;
-                font-size: 14px;
-            }
-        }
-
-        #receipt {
-            display: none;
-            font-family: monospace;
-            white-space: pre-wrap;
-            background: #fff;
-            padding: 15px;
-            border: 1px dashed #333;
-            margin-top: 20px;
-        }
-    </style>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>Simple To‑Do (localStorage)</title>
+  <style>
+    :root{--bg:#f5f7fb;--card:#fff;--accent:#2b8aef;--done:#28a745}
+    body{font-family:system-ui,-apple-system,Segoe UI,Roboto,Arial; background:var(--bg); margin:0; padding:24px; color:#222}
+    .wrap{max-width:720px;margin:0 auto}
+    .card{background:var(--card);padding:18px;border-radius:10px;box-shadow:0 6px 20px rgba(16,24,40,.06)}
+    h1{margin:0 0 12px;font-size:20px}
+    form{display:flex;gap:8px;margin-bottom:12px}
+    input[type="text"]{flex:1;padding:10px;border:1px solid #dfe6ee;border-radius:8px;font-size:15px}
+    button{background:var(--accent);color:#fff;border:0;padding:10px 12px;border-radius:8px;cursor:pointer}
+    button.ghost{background:transparent;color:var(--accent);border:1px solid #dfe6ee}
+    .controls{display:flex;gap:8px;align-items:center;margin-bottom:12px;flex-wrap:wrap}
+    .filters{display:flex;gap:6px}
+    .filters button{background:#f1f6ff;color:#1a3d7c;border:1px solid #e6f0ff;padding:8px 10px;border-radius:8px;font-size:14px}
+    ul{list-style:none;padding:0;margin:0}
+    li{display:flex;align-items:center;gap:10px;padding:10px;border-radius:8px;border-bottom:1px solid #f0f3f8}
+    li:last-child{border-bottom:none}
+    .todo-text{flex:1;word-break:break-word}
+    .todo-text.done{color:#777;text-decoration:line-through}
+    .small-btn{background:transparent;border:0;color:#666;cursor:pointer;padding:6px;border-radius:6px}
+    .small-btn:hover{background:#f3f6fb}
+    .meta{font-size:13px;color:#666;margin-top:10px;display:flex;justify-content:space-between;align-items:center}
+    .empty{padding:18px;text-align:center;color:#666}
+    @media (max-width:520px){form{flex-direction:column} .controls{flex-direction:column;align-items:stretch}}
+  </style>
 </head>
 <body>
+  <div class="wrap">
+    <div class="card">
+      <h1>Simple To‑Do (saved to your browser)</h1>
 
-<div class="container">
-    <h2>PICK AND GO - POS System</h2>
-    
-    <div class="grid">
-        <div class="panel">
-            <h3>Available Products (100 Items)</h3>
-            <div class="search-box">
-                <input type="text" id="search-input" placeholder="Search by product name or ID..." onkeyup="filterProducts()">
-            </div>
-            <div class="product-scroll" id="product-list">
-                </div>
+      <form id="add-form" autocomplete="off">
+        <input id="new-task" type="text" placeholder="Add a task and press Enter" />
+        <button id="add-btn" type="submit">Add</button>
+      </form>
+
+      <div class="controls">
+        <div class="filters" role="tablist" aria-label="Filters">
+          <button class="filter active" data-filter="all">All</button>
+          <button class="filter" data-filter="active">Active</button>
+          <button class="filter" data-filter="completed">Completed</button>
         </div>
-
-        <div class="panel">
-            <h3>Shopping Cart</h3>
-            <div style="max-height: 380px; overflow-y: auto;">
-                <table>
-                    <thead>
-                        <tr>
-                            <th>Item</th>
-                            <th>Price</th>
-                            <th>Qty</th>
-                            <th>Total</th>
-                            <th>X</th>
-                        </tr>
-                    </thead>
-                    <tbody id="cart-table-body">
-                        </tbody>
-                </table>
-            </div>
-            
-            <div class="total-section">
-                Grand Total: Rs. <span id="grand-total">0</span>
-            </div>
-
-            <button class="checkout-btn" onclick="checkout()">Print Bill & Checkout</button>
-            <button class="checkout-btn danger-btn" onclick="clearCart()" style="margin-top: 5px;">Clear Cart</button>
+        <div style="margin-left:auto;display:flex;gap:8px">
+          <button id="clear-completed" class="ghost">Clear completed</button>
+          <button id="export" class="ghost" title="Download JSON">Export</button>
+          <button id="import" class="ghost" title="Load JSON">Import</button>
         </div>
+      </div>
+
+      <ul id="todo-list" aria-live="polite"></ul>
+      <div id="empty-msg" class="empty" hidden>No tasks yet — add one above.</div>
+
+      <div class="meta">
+        <div><strong><span id="count">0</span></strong> tasks</div>
+        <div style="font-size:13px;color:#666">Stored in localStorage (key: todo-list)</div>
+      </div>
     </div>
+  </div>
 
-    <div id="receipt"></div>
-</div>
+  <input id="import-file" type="file" accept="application/json" style="display:none" />
 
-<script>
-    const products = [
-        { id: "1", name: "Sugar 1kg", price: 140 },
-        { id: "2", name: "Cooking Oil 1L", price: 550 },
-        { id: "3", name: "Tea 250g", price: 380 },
-        { id: "4", name: "Rice Basmati 1kg", price: 320 },
-        { id: "5", name: "Wheat Flour (Atta) 10kg", price: 1250 },
-        { id: "6", name: "Daal Chana 1kg", price: 340 },
-        { id: "7", name: "Daal Moong 1kg", price: 360 },
-        { id: "8", name: "Daal Mash 1kg", price: 420 },
-        { id: "9", name: "Daal Masoor 1kg", price: 310 },
-        { id: "10", name: "Red Chili Powder 200g", price: 180 },
-        { id: "11", name: "Turmeric Powder 200g", price: 150 },
-        { id: "12", name: "Coriander Powder 200g", price: 140 },
-        { id: "13", name: "Salt 800g", price: 50 },
-        { id: "14", name: "Banaspati Ghee 1kg", price: 520 },
-        { id: "15", name: "Black Tea 475g", price: 750 },
-        { id: "16", name: "Green Tea Box", price: 220 },
-        { id: "17", name: "Instant Noodles (Pack)", price: 65 },
-        { id: "18", name: "Pasta 400g", price: 240 },
-        { id: "19", name: "Macaroni 400g", price: 230 },
-        { id: "20", name: "Vermicelli (Sawaiyan)", price: 120 },
-        { id: "21", name: "Tomato Paste 400g", price: 250 },
-        { id: "22", name: "Mixed Pickle (Achaar) 1kg", price: 350 },
-        { id: "23", name: "National Recipe Mix Box", price: 90 },
-        { id: "24", name: "Shan Biryani Masala", price: 100 },
-        { id: "25", name: "Vinegar 500ml", price: 130 },
-        { id: "26", name: "Chili Garlic Sauce 400g", price: 280 },
-        { id: "27", name: "Tomato Ketchup 500g", price: 320 },
-        { id: "28", name: "Mayonnaise 300g", price: 310 },
-        { id: "29", name: "Jam Mixed Fruit 450g", price: 350 },
-        { id: "30", name: "Peanut Butter 340g", price: 550 },
-        { id: "31", name: "Honey 250g", price: 450 },
-        { id: "32", name: "Custard Powder 300g", price: 200 },
-        { id: "33", name: "Jelly Crystals Pack", price: 60 },
-        { id: "34", name: "Corn Flour 200g", price: 130 },
-        { id: "35", name: "Baking Powder 100g", price: 110 },
-        { id: "36", name: "Milk Pack 1L", price: 320 },
-        { id: "37", name: "UHT Cream 200ml", price: 180 },
-        { id: "38", name: "Butter Pack 200g", price: 390 },
-        { id: "39", name: "Cheddar Cheese 200g", price: 520 },
-        { id: "40", name: "Yogurt 1kg", price: 240 },
-        { id: "41", name: "Plain Bread Large", price: 170 },
-        { id: "42", name: "Milky Rusk Pack", price: 150 },
-        { id: "43", name: "Cake Rusk Pack", price: 250 },
-        { id: "44", name: "Plain Biscuits Family Pack", price: 100 },
-        { id: "45", name: "Chocolate Cookies Pack", price: 120 },
-        { id: "46", name: "Cream Biscuits", price: 60 },
-        { id: "47", name: "Potato Chips Large", price: 150 },
-        { id: "48", name: "Nimbu Pani / Drink Powder", price: 50 },
-        { id: "49", name: "Juice Box 1L", price: 280 },
-        { id: "50", name: "Soft Drink 1.5L", price: 240 },
-        { id: "51", name: "Energy Drink Can", price: 220 },
-        { id: "52", name: "Mineral Water 1.5L", price: 90 },
-        { id: "53", name: "Chocolate Bar Large", price: 200 },
-        { id: "54", name: "Wafers Pack", price: 50 },
-        { id: "55", name: "Bubble Gum Pack", price: 40 },
-        { id: "56", name: "Toffees Pack", price: 70 },
-        { id: "57", name: "Bath Soap Standard", price: 140 },
-        { id: "58", name: "Hand Wash 250ml", price: 250 },
-        { id: "59", name: "Toothpaste 150g", price: 280 },
-        { id: "60", name: "Toothbrush Single", price: 60 },
-        { id: "61", name: "Shampoo 350ml", price: 480 },
-        { id: "62", name: "Hair Oil 200ml", price: 250 },
-        { id: "63", name: "Face Wash 100ml", price: 350 },
-        { id: "64", name: "Talcum Powder 200g", price: 300 },
-        { id: "65", name: "Body Lotion 200ml", price: 450 },
-        { id: "66", name: "Shaving Foam 200ml", price: 380 },
-        { id: "67", name: "Razor Pack (5 pcs)", price: 200 },
-        { id: "68", name: "Laundry Detergent Powder 1kg", price: 380 },
-        { id: "69", name: "Liquid Detergent 1L", price: 450 },
-        { id: "70", name: "Dish Wash Bar", price: 70 },
-        { id: "71", name: "Dish Wash Liquid 500ml", price: 240 },
-        { id: "72", name: "Floor Cleaner 1L", price: 320 },
-        { id: "73", name: "Toilet Cleaner 500ml", price: 280 },
-        { id: "74", name: "Glass Cleaner 500ml", price: 260 },
-        { id: "75", name: "Bleach Bottle 1L", price: 150 },
-        { id: "76", name: "Insecticide Spray", price: 550 },
-        { id: "77", name: "Mosquito Coil Pack", price: 120 },
-        { id: "78", name: "Tissue Box (150 sheets)", price: 210 },
-        { id: "79", name: "Kitchen Roll (2 rolls)", price: 240 },
-        { id: "80", name: "Toilet Roll Pack (4s)", price: 220 },
-        { id: "81", name: "Garbage Bags Large (Pack)", price: 180 },
-        { id: "82", name: "Aluminum Foil Roll", price: 280 },
-        { id: "83", name: "Cling Film Wrap", price: 200 },
-        { id: "84", name: "Sponges Scrub (Pack)", price: 90 },
-        { id: "85", name: "Match Box (Bundle)", price: 60 },
-        { id: "86", name: "Candles Pack", price: 100 },
-        { id: "87", name: "Shoe Polish Black", price: 150 },
-        { id: "88", name: "Shoe Brush", price: 120 },
-        { id: "89", name: "Phenyl Tablets Pack", price: 100 },
-        { id: "90", name: "Air Freshener Spray", price: 420 },
-        { id: "91", name: "Baby Diapers Pack", price: 1350 },
-        { id: "92", name: "Baby Wipes Pack", price: 250 },
-        { id: "93", name: "Baby Powder 200g", price: 320 },
-        { id: "94", name: "Baby Soap", price: 130 },
-        { id: "95", name: "Baby Feeding Bottle", price: 280 },
-        { id: "96", name: "Sanitary Pads Pack", price: 320 },
-        { id: "97", name: "First Aid Bandages Pack", price: 80 },
-        { id: "98", name: "Antiseptic Liquid 100ml", price: 190 },
-        { id: "99", name: "Cotton Roll 100g", price: 140 },
-        { id: "100", name: "Pain Relief Balm", price: 150 }
-    ];
+  <script>
+    // Local storage key
+    const STORAGE_KEY = 'todo-list';
 
-    let cart = [];
+    // State
+    let todos = []; // {id, text, done, createdAt}
+    let filter = 'all'; // all | active | completed
 
-    function loadProducts(itemsToDisplay) {
-        const productListEl = document.getElementById("product-list");
-        productListEl.innerHTML = "";
-        
-        itemsToDisplay.forEach(p => {
-            productListEl.innerHTML += `
-                <div class="item-card">
-                    <div>
-                        <strong>ID: ${p.id} - ${p.name}</strong><br>
-                        Rs. ${p.price}
-                    </div>
-                    <div>
-                        <input type="number" id="qty-${p.id}" value="1" min="1">
-                        <button onclick="addToCart('${p.id}')">Add</button>
-                    </div>
-                </div>
-            `;
-        });
+    // Elements
+    const listEl = document.getElementById('todo-list');
+    const newTaskInput = document.getElementById('new-task');
+    const addForm = document.getElementById('add-form');
+    const countEl = document.getElementById('count');
+    const emptyMsg = document.getElementById('empty-msg');
+    const filterButtons = document.querySelectorAll('.filter');
+    const clearCompletedBtn = document.getElementById('clear-completed');
+    const exportBtn = document.getElementById('export');
+    const importBtn = document.getElementById('import');
+    const importFileInput = document.getElementById('import-file');
+
+    // Helpers
+    const uid = () => Date.now().toString(36) + Math.random().toString(36).slice(2,8);
+
+    function save() {
+      localStorage.setItem(STORAGE_KEY, JSON.stringify(todos));
+      render();
     }
 
-    function filterProducts() {
-        const query = document.getElementById("search-input").value.toLowerCase();
-        const filtered = products.filter(p => 
-            p.name.toLowerCase().includes(query) || p.id.toLowerCase() === query
-        );
-        loadProducts(filtered);
+    function load() {
+      try {
+        const raw = localStorage.getItem(STORAGE_KEY);
+        if (!raw) return;
+        todos = JSON.parse(raw);
+      } catch (e) {
+        console.error('Failed to load todos:', e);
+        todos = [];
+      }
     }
 
-    function addToCart(id) {
-        const product = products.find(p => p.id === id);
-        const qtyInput = document.getElementById(`qty-${id}`);
-        const quantity = parseInt(qtyInput.value);
+    function addTodo(text) {
+      const t = text && text.trim();
+      if (!t) return;
+      todos.unshift({ id: uid(), text: t, done: false, createdAt: new Date().toISOString() });
+      save();
+    }
 
-        if (isNaN(quantity) || quantity <= 0) {
-            alert("Please enter a valid quantity!");
-            return;
+    function toggleDone(id) {
+      const it = todos.find(x => x.id === id);
+      if (it) { it.done = !it.done; save(); }
+    }
+
+    function removeFromList(id) {
+      todos = todos.filter(x => x.id !== id);
+      save();
+    }
+
+    function editTodo(id) {
+      const it = todos.find(x => x.id === id);
+      if (!it) return;
+      const newText = prompt('Edit task', it.text);
+      if (newText === null) return; // cancelled
+      if (newText.trim() === '') {
+        // if emptied, remove
+        if (confirm('Empty text — delete task?')) {
+          removeFromList(id);
         }
-
-        const cartItem = cart.find(item => item.id === id);
-        if (cartItem) {
-            cartItem.quantity += quantity;
-        } else {
-            cart.push({ id: product.id, name: product.name, price: product.price, quantity: quantity });
-        }
-        updateCartUI();
+        return;
+      }
+      it.text = newText.trim();
+      save();
     }
 
-    function removeFromCart(id) {
-        cart = cart.filter(item => item.id !== id);
-        updateCartUI();
+    function clearCompleted() {
+      if (!todos.some(t => t.done)) return alert('No completed tasks.');
+      if (!confirm('Remove all completed tasks?')) return;
+      todos = todos.filter(t => !t.done);
+      save();
     }
 
-    function updateCartUI() {
-        const cartTableBody = document.getElementById("cart-table-body");
-        const grandTotalEl = document.getElementById("grand-total");
-        cartTableBody.innerHTML = "";
+    function filteredTodos() {
+      if (filter === 'active') return todos.filter(t => !t.done);
+      if (filter === 'completed') return todos.filter(t => t.done);
+      return todos;
+    }
 
-        let grandTotal = 0;
-        cart.forEach(item => {
-            let itemTotal = item.price * item.quantity;
-            grandTotal += itemTotal;
-            cartTableBody.innerHTML += `
-                <tr>
-                    <td>${item.name}</td>
-                    <td>Rs. ${item.price}</td>
-                    <td>${item.quantity}</td>
-                    <td>Rs. ${itemTotal}</td>
-                    <td><button class="danger-btn" onclick="removeFromCart('${item.id}')">X</button></td>
-                </tr>
-            `;
+    function render() {
+      const items = filteredTodos();
+      listEl.innerHTML = '';
+      if (items.length === 0) {
+        emptyMsg.hidden = false;
+      } else {
+        emptyMsg.hidden = true;
+      }
+
+      for (const t of items) {
+        const li = document.createElement('li');
+
+        const chk = document.createElement('input');
+        chk.type = 'checkbox';
+        chk.checked = t.done;
+        chk.setAttribute('aria-label', 'Mark complete');
+        chk.addEventListener('change', () => toggleDone(t.id));
+        li.appendChild(chk);
+
+        const span = document.createElement('div');
+        span.className = 'todo-text' + (t.done ? ' done' : '');
+        span.textContent = t.text;
+        span.title = 'Double-click to edit';
+        // optional: double-click to edit
+        span.addEventListener('dblclick', () => editTodo(t.id));
+        li.appendChild(span);
+
+        const created = document.createElement('div');
+        created.style.fontSize = '12px';
+        created.style.color = '#888';
+        created.style.marginRight = '8px';
+        created.textContent = (new Date(t.createdAt)).toLocaleString();
+        li.appendChild(created);
+
+        const btnEdit = document.createElement('button');
+        btnEdit.className = 'small-btn';
+        btnEdit.title = 'Edit';
+        btnEdit.innerHTML = '✏️';
+        btnEdit.addEventListener('click', () => editTodo(t.id));
+        li.appendChild(btnEdit);
+
+        const btnDel = document.createElement('button');
+        btnDel.className = 'small-btn';
+        btnDel.title = 'Delete';
+        btnDel.innerHTML = '🗑️';
+        btnDel.addEventListener('click', () => {
+          if (confirm('Delete this task?')) removeFromList(t.id);
         });
-        grandTotalEl.innerText = grandTotal;
+        li.appendChild(btnDel);
+
+        listEl.appendChild(li);
+      }
+
+      countEl.textContent = todos.length;
     }
 
-    function clearCart() {
-        cart = [];
-        updateCartUI();
-    }
+    // Events
+    addForm.addEventListener('submit', (e) => {
+      e.preventDefault();
+      addTodo(newTaskInput.value);
+      newTaskInput.value = '';
+      newTaskInput.focus();
+    });
 
-    function checkout() {
-        if (cart.length === 0) {
-            alert("Cart is empty!");
-            return;
+    filterButtons.forEach(btn => {
+      btn.addEventListener('click', () => {
+        filterButtons.forEach(b => b.classList.remove('active'));
+        btn.classList.add('active');
+        filter = btn.dataset.filter;
+        render();
+      });
+    });
+
+    clearCompletedBtn.addEventListener('click', clearCompleted);
+
+    // Export as JSON
+    exportBtn.addEventListener('click', () => {
+      const data = JSON.stringify(todos, null, 2);
+      const blob = new Blob([data], {type: 'application/json'});
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = 'todos.json';
+      a.click();
+      URL.revokeObjectURL(url);
+    });
+
+    // Import JSON file
+    importBtn.addEventListener('click', () => importFileInput.click());
+    importFileInput.addEventListener('change', (e) => {
+      const f = e.target.files[0];
+      if (!f) return;
+      const reader = new FileReader();
+      reader.onload = ev => {
+        try {
+          const parsed = JSON.parse(ev.target.result);
+          if (!Array.isArray(parsed)) throw new Error('JSON must be an array of tasks');
+          // basic validation: map to our shape
+          todos = parsed.map(x => ({
+            id: x.id || uid(),
+            text: (x.text || '').toString(),
+            done: !!x.done,
+            createdAt: x.createdAt || new Date().toISOString()
+          }));
+          save();
+          alert('Imported ' + todos.length + ' tasks.');
+        } catch (err) {
+          alert('Failed to import: ' + err.message);
         }
+      };
+      reader.readAsText(f);
+      importFileInput.value = '';
+    });
 
-        const now = new Date();
-        const dateTimeStr = now.toISOString().slice(0, 19).replace('T', ' ');
-
-        let divider = "==============================";
-        let receiptText = divider + "\n";
-        receiptText += "          PICK AND GO           \n";
-        receiptText += divider + "\n";
-        receiptText += `Date/Time: ${dateTimeStr}\n`;
-        receiptText += "------------------------------\n";
-
-        let grandTotal = 0;
-        cart.forEach(item => {
-            let itemTotal = item.price * item.quantity;
-            grandTotal += itemTotal;
-            receiptText += `${item.name} x ${item.quantity} = Rs. ${itemTotal}\n`;
-        });
-
-        receiptText += "------------------------------\n";
-        receiptText += `GRAND TOTAL: Rs. ${grandTotal}\n`;
-        receiptText += divider + "\n";
-        receiptText += "       Thank You for Shopping!\n\n\n";
-
-        // Assign text directly to receipt element before printing
-        document.getElementById("receipt").innerText = receiptText;
-        
-        // Trigger browser print dialog for thermal printer
-        window.print();
-
-        // Reset cart after checkout
-        cart = [];
-        updateCartUI();
-    }
-
-    // Initialize on page load
-    window.onload = () => loadProducts(products);
-</script>
-
+    // Init
+    load();
+    render();
+  </script>
 </body>
 </html>
